@@ -1,0 +1,21 @@
+services:
+  desktop:
+    build:
+      context: .
+      args:
+        # You can override these here or keep the defaults from the Dockerfile
+        USER_NAME: linuxuser
+        USER_PASSWORD: linuxpassword
+        ROOT_PASSWORD: rootpassword
+    ports:
+      - "3389:3389"
+    volumes:
+      # Mount a docker volume to the user's home directory.
+      # UPDATE THE PATH '/home/linuxuser' IF YOU CHANGE THE USER_NAME ARGUMENT!
+      - home_data:/home/linuxuser
+    restart: unless-stopped
+    # Shared memory size might need to be increased for graphical apps (e.g. browsers)
+    shm_size: '1gb'
+
+volumes:
+  home_data:
