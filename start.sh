@@ -14,6 +14,12 @@ if [ ! -f /home/$USER_NAME/.xsession ]; then
     chown $USER_NAME:$USER_NAME /home/$USER_NAME/.xsession
 fi
 
+# Ensure Homebrew is in .bashrc (in case volume persisted an old .bashrc)
+if [ -f /home/$USER_NAME/.bashrc ] && ! grep -q "brew shellenv" /home/$USER_NAME/.bashrc; then
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/$USER_NAME/.bashrc
+    chown $USER_NAME:$USER_NAME /home/$USER_NAME/.bashrc
+fi
+
 # Start sesman in background
 /usr/sbin/xrdp-sesman
 

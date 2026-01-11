@@ -12,6 +12,11 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     dbus-x11 \
     x11-xserver-utils \
+    build-essential \
+    curl \
+    git \
+    file \
+    procps \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -37,6 +42,25 @@ RUN sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.co
 # Configure XFCE for the user
 RUN echo "xfce4-session" > /home/${USER_NAME}/.xsession && \
     chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.xsession
+
+# Install Homebrew
+# Create the linuxbrew directory and give ownership to the user
+RUN mkdir -p /home/linuxbrew/.linuxbrew && \
+    chown -R ${USER_NAME}:${USER_NAME} /home/linuxbrew
+
+# Switch to the user context to install Homebrew
+USER ${USER_NAME}
+ENV NONINTERACTIVE=1
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Configure environment for the user
+RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${USER_NAME}/.bashrc
+
+# Add Homebrew to PATH for the rest of the build (if needed) and runtime
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
+
+# Switch back to root for the remaining operations (start.sh needs root)
+USER root
 
 # Grant access to ssl-cert group for xrdp user (often fixes permission issues)
 RUN adduser xrdp ssl-cert
