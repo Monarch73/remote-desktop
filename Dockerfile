@@ -30,6 +30,12 @@ RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dea
     echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
     apt-get update && apt-get install -y \
     google-chrome-stable \
+    htop \
+    netcat-openbsd \
+    telnet \
+    sshfs \
+    socat \
+    screen\
     code \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

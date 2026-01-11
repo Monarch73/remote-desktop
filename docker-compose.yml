@@ -16,6 +16,8 @@ services:
     restart: unless-stopped
     # Shared memory size might need to be increased for graphical apps (e.g. browsers)
     shm_size: '1gb'
+    security_opt:
+      - seccomp:unconfined
 
 volumes:
   home_data:
