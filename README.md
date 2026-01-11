@@ -11,7 +11,8 @@ It is designed to be easy to spin up, persistent, and customizable.
 *   **Remote Access:** XRDP (Standard RDP port 3389)
 *   **User Management:** Non-root user with `sudo` privileges.
 *   **Persistence:** Docker volume for user's home directory (`/home/linuxuser`).
-*   **Tools:** Includes basic tools like `vim`, `net-tools`, and `sudo`.
+*   **Software:** Google Chrome and Visual Studio Code pre-installed.
+*   **Tools:** Includes basic tools like `vim`, `net-tools`, `sudo`, and `Homebrew`.
 
 ## 📋 Prerequisites
 

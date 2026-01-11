@@ -17,6 +17,20 @@ RUN apt-get update && apt-get install -y \
     git \
     file \
     procps \
+    gnupg \
+    apt-transport-https \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome and Visual Studio Code
+RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list && \
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg && \
+    install -D -o root -g root -m 644 /usr/share/keyrings/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
+    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
+    apt-get update && apt-get install -y \
+    google-chrome-stable \
+    code \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

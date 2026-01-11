@@ -8,6 +8,7 @@ This project provides a containerized remote desktop environment using Docker. I
 *   **Ubuntu 24.04 (Noble Numbat):** Base operating system.
 *   **XFCE4:** Lightweight desktop environment.
 *   **XRDP:** Open-source Remote Desktop Protocol server.
+*   **Software:** Google Chrome, Visual Studio Code, and Homebrew.
 
 ## Building and Running
 
@@ -49,7 +50,7 @@ volumes:
 
 | File | Description |
 | :--- | :--- |
-| `Dockerfile` | Defines the image: installs Ubuntu, XFCE, XRDP, creates the user, and configures permissions. |
+| `Dockerfile` | Defines the image: installs Ubuntu, XFCE, XRDP, Google Chrome, VS Code, Homebrew, creates the user, and configures permissions. |
 | `docker-compose.yml` | Orchestrates the container, maps port 3389, sets up the persistent home volume, and passes build arguments. |
 | `start.sh` | Entrypoint script. Starts DBus, generates XRDP keys, ensures the user session is configured, and launches the XRDP services. |
 
