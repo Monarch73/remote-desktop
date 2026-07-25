@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     x11-xserver-utils \
     build-essential \
     curl \
+    wget \
+    unzip \
+    fontconfig \
     git \
     file \
     procps \
@@ -24,16 +27,18 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome, Visual Studio Code, and Microsoft Edge
+# Install Google Chrome, Visual Studio Code, Microsoft Edge, and PowerShell 7
 RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-archive-keyring.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list && \
     curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg && \
     install -D -o root -g root -m 644 /usr/share/keyrings/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
     echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-prod.list && \
     apt-get update && apt-get install -y \
     google-chrome-stable \
     microsoft-edge-stable \
+    powershell \
     htop \
     netcat-openbsd \
     telnet \
@@ -43,6 +48,21 @@ RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dea
     code \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Oh My Posh system-wide, download standard GitHub themes, and install JetBrainsMono Nerd Font
+RUN curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin && \
+    mkdir -p /usr/local/share/oh-my-posh/themes && \
+    curl -fLO https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip && \
+    unzip -o themes.zip -d /usr/local/share/oh-my-posh/themes && \
+    chmod ugo+r /usr/local/share/oh-my-posh/themes/*.json && \
+    rm -f themes.zip && \
+    mkdir -p /usr/local/share/fonts/nerd-fonts && \
+    curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip && \
+    unzip -o JetBrainsMono.zip -d /usr/local/share/fonts/nerd-fonts && \
+    rm -f JetBrainsMono.zip && \
+    mkdir -p /etc/fonts/conf.d && \
+    printf '<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig><alias><family>monospace</family><prefer><family>JetBrainsMono Nerd Font Mono</family></prefer></alias></fontconfig>\n' > /etc/fonts/conf.d/01-nerdfont.conf && \
+    fc-cache -fv
 
 # Arguments for User and Passwords
 ARG USER_NAME=linuxuser
@@ -55,17 +75,20 @@ ENV USER_NAME=${USER_NAME}
 # Set root password
 RUN echo "root:${ROOT_PASSWORD}" | chpasswd
 
-# Create user with sudo privileges
-RUN useradd -m -s /bin/bash ${USER_NAME} && \
+# Create user with sudo privileges and PowerShell 7 as default login shell
+RUN echo "/usr/bin/pwsh" >> /etc/shells && \
+    useradd -m -s /usr/bin/pwsh ${USER_NAME} && \
     echo "${USER_NAME}:${USER_PASSWORD}" | chpasswd && \
     usermod -aG sudo ${USER_NAME}
 
 # Configure XRDP to allow anyone to start X server (needed for some setups)
 RUN sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
 
-# Configure XFCE for the user
+# Configure XFCE session and terminal emulator default font for the user
 RUN echo "xfce4-session" > /home/${USER_NAME}/.xsession && \
-    chown ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.xsession
+    mkdir -p /home/${USER_NAME}/.config/xfce4/terminal && \
+    printf "[Configuration]\nFontName=JetBrainsMono Nerd Font Mono 12\nUseDefaultFont=FALSE\n" > /home/${USER_NAME}/.config/xfce4/terminal/terminalrc && \
+    chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.xsession /home/${USER_NAME}/.config
 
 # Install Homebrew
 # Create the linuxbrew directory and give ownership to the user
@@ -77,8 +100,10 @@ USER ${USER_NAME}
 ENV NONINTERACTIVE=1
 RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Configure environment for the user
-RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${USER_NAME}/.bashrc
+# Configure environment for the user (Bash and PowerShell)
+RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${USER_NAME}/.bashrc && \
+    mkdir -p /home/${USER_NAME}/.config/powershell && \
+    printf 'if (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > /home/${USER_NAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
 
 # Add Homebrew to PATH for the rest of the build (if needed) and runtime
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"

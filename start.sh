@@ -17,6 +17,9 @@ if [ -f /opt/home_seed.tar.xz ] && [ ! -d "/home/$USER_NAME/Desktop" ]; then
     mkdir -p /home/$USER_NAME
     tar -xf /opt/home_seed.tar.xz -C /home/$USER_NAME/
     chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
+    echo "Home directory seeded for $USER_NAME."
+else
+    echo "Home directory not seeded for $USER_NAME."
 fi
 
 # Make sure the user has a .xsession file if not present (in case volume was empty)
@@ -35,6 +38,15 @@ fi
 if [ -f /home/$USER_NAME/.bashrc ] && ! grep -q "brew shellenv" /home/$USER_NAME/.bashrc; then
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/$USER_NAME/.bashrc
     chown $USER_NAME:$USER_NAME /home/$USER_NAME/.bashrc
+fi
+
+# Ensure PowerShell profile exists and is configured (in case volume persisted an older home directory)
+PS_PROFILE_DIR="/home/$USER_NAME/.config/powershell"
+PS_PROFILE_PATH="$PS_PROFILE_DIR/Microsoft.PowerShell_profile.ps1"
+if [ ! -f "$PS_PROFILE_PATH" ]; then
+    mkdir -p "$PS_PROFILE_DIR"
+    printf 'if (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > "$PS_PROFILE_PATH"
+    chown -R $USER_NAME:$USER_NAME "$PS_PROFILE_DIR"
 fi
 
 # Clean up stale PID and lock files from previous container runs
