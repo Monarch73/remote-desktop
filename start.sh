@@ -45,7 +45,7 @@ PS_PROFILE_DIR="/home/$USER_NAME/.config/powershell"
 PS_PROFILE_PATH="$PS_PROFILE_DIR/Microsoft.PowerShell_profile.ps1"
 if [ ! -f "$PS_PROFILE_PATH" ]; then
     mkdir -p "$PS_PROFILE_DIR"
-    printf 'if (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > "$PS_PROFILE_PATH"
+    printf '$OutputEncoding = [System.Text.Encoding]::UTF8\n[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n\nif (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > "$PS_PROFILE_PATH"
     chown -R $USER_NAME:$USER_NAME "$PS_PROFILE_DIR"
 fi
 

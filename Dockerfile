@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     fontconfig \
+    locales \
     git \
     file \
     procps \
@@ -26,6 +27,12 @@ RUN apt-get update && apt-get install -y \
     apt-transport-https \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Generate and set system UTF-8 locale for terminal emulators and Nerd Fonts
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Install Google Chrome, Visual Studio Code, Microsoft Edge, and PowerShell 7
 RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-archive-keyring.gpg && \
@@ -84,10 +91,10 @@ RUN echo "/usr/bin/pwsh" >> /etc/shells && \
 # Configure XRDP to allow anyone to start X server (needed for some setups)
 RUN sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
 
-# Configure XFCE session and terminal emulator default font for the user
+# Configure XFCE session and terminal emulator default font and UTF-8 encoding for the user
 RUN echo "xfce4-session" > /home/${USER_NAME}/.xsession && \
     mkdir -p /home/${USER_NAME}/.config/xfce4/terminal && \
-    printf "[Configuration]\nFontName=JetBrainsMono Nerd Font Mono 12\nUseDefaultFont=FALSE\n" > /home/${USER_NAME}/.config/xfce4/terminal/terminalrc && \
+    printf "[Configuration]\nFontName=JetBrainsMono Nerd Font Mono 12\nUseDefaultFont=FALSE\nEncoding=UTF-8\n" > /home/${USER_NAME}/.config/xfce4/terminal/terminalrc && \
     chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/.xsession /home/${USER_NAME}/.config
 
 # Install Homebrew
@@ -103,7 +110,7 @@ RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/instal
 # Configure environment for the user (Bash and PowerShell)
 RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/${USER_NAME}/.bashrc && \
     mkdir -p /home/${USER_NAME}/.config/powershell && \
-    printf 'if (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > /home/${USER_NAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
+    printf '$OutputEncoding = [System.Text.Encoding]::UTF8\n[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n\nif (Test-Path "/home/linuxbrew/.linuxbrew/bin/brew") {\n    (& "/home/linuxbrew/.linuxbrew/bin/brew" shellenv) | Invoke-Expression\n}\n\nif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {\n    oh-my-posh init pwsh --config "/usr/local/share/oh-my-posh/themes/jandedobbeleer.omp.json" | Invoke-Expression\n}\n' > /home/${USER_NAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
 
 # Add Homebrew to PATH for the rest of the build (if needed) and runtime
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
