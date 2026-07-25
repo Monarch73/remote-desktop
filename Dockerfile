@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     xfce4 \
     xfce4-goodies \
     xrdp \
+    ubuntu-wallpapers \
+    desktop-base \
     sudo \
     vim \
     net-tools \
