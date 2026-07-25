@@ -8,7 +8,7 @@ This project provides a containerized remote desktop environment using Docker. I
 *   **Ubuntu 26.04 (Resolute Raccoon):** Base operating system.
 *   **Desktop Environments:** Choice of XFCE4, MATE, or KDE Plasma.
 *   **XRDP:** Open-source Remote Desktop Protocol server.
-*   **Software:** Google Chrome, Visual Studio Code, and Homebrew.
+*   **Software:** Google Chrome, Microsoft Edge, Visual Studio Code, and Homebrew.
 *   **GPU Pass-Through:** Configurable NVIDIA & WSL2/DirectX hardware acceleration options.
 
 ## Building and Running

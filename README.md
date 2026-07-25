@@ -13,7 +13,7 @@ It is designed to be easy to spin up, persistent, customizable, and GPU-pass-thr
 *   **Security:** AppArmor & Seccomp unconfined options for seamless DBus and sandbox compatibility.
 *   **User Management:** Non-root user with `sudo` privileges.
 *   **Persistence:** Docker volume for user's home directory (`/home/linuxuser`).
-*   **Software:** Google Chrome and Visual Studio Code pre-installed.
+*   **Software:** Google Chrome, Microsoft Edge, and Visual Studio Code pre-installed.
 *   **Tools:** Includes basic tools like `vim`, `net-tools`, `sudo`, and `Homebrew`.
 
 ## 📋 Prerequisites
