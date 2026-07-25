@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: remote-desktop-service
+  labels:
+    app: remote-desktop
+spec:
+  # Choose your Service Type based on your Kubernetes architecture:
+  # - LoadBalancer: Automatically provisions an external IP via Cloud providers (AWS/GCP/Azure) or MetalLB on bare-metal.
+  # - NodePort: Exposes the service on a static port (e.g., 31389) across all cluster Worker Nodes.
+  # - ClusterIP: Internal-only access (Recommended if connecting exclusively via 'kubectl port-forward' or Ingress tunnels).
+  type: LoadBalancer
+  selector:
+    app: remote-desktop
+  ports:
+    - name: xrdp
+      port: 3389
+      targetPort: 3389
+      protocol: TCP
+      # Uncomment and set if using type: NodePort (Range: 30000-32767):
+      # nodePort: 31389

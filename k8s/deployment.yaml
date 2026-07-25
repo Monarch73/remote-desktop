@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remote-desktop-deployment
+  labels:
+    app: remote-desktop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: remote-desktop
+  strategy:
+    type: Recreate # Recreate strategy prevents PVC split-brain lock during pod updates
+  template:
+    metadata:
+      labels:
+        app: remote-desktop
+    spec:
+      containers:
+        - name: desktop-workspace
+          # Replace with your pre-built container registry image tag (e.g., myregistry.io/remote-desktop:xfce4):
+          image: remote-desktop:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: rdp
+              containerPort: 3389
+              protocol: TCP
+          
+          # ===================================================================
+          # Security Context: Required for unconfined Chromium Browser sandboxing
+          # ===================================================================
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+            # Optional: Set seccomp to unconfined if required by specific storage or virtualization plugins
+            # seccompProfile:
+            #   type: Unconfined
+
+          # ===================================================================
+          # Resource Requests & Limits (+ Commented NVIDIA GPU Acceleration)
+          # ===================================================================
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "8Gi"
+              cpu: "4000m"
+              # ---------------------------------------------------------------
+              # Option 1: NVIDIA GPU Passthrough in Kubernetes
+              # Requires official NVIDIA Kubernetes Device Plugin installed in cluster
+              # ---------------------------------------------------------------
+              # nvidia.com/gpu: "1"
+
+          volumeMounts:
+            # Persistent userdata mounting point (/home/linuxuser)
+            # Update mounting path if you customize USER_NAME in Dockerfile arguments
+            - name: home-storage
+              mountPath: /home/linuxuser
+            # Shared memory mounting point (/dev/shm) for Chrome / Edge stability
+            - name: dshm
+              mountPath: /dev/shm
+
+      volumes:
+        - name: home-storage
+          persistentVolumeClaim:
+            claimName: remote-desktop-pvc
+        
+        # =====================================================================
+        # Chromium Shared Memory Bypass: Mount 2Gi in-memory emptyDir to /dev/shm
+        # Prevents browser out-of-memory crashes on default 64MB K8s shared shm
+        # =====================================================================
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi

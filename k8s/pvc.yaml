@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: remote-desktop-pvc
+  labels:
+    app: remote-desktop
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  # Optional: specify your Kubernetes cluster storageClassName if required (e.g., standard, gp2, ceph-rbd)
+  # storageClassName: standard

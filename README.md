@@ -42,7 +42,7 @@ Running GUI web browsers inside non-privileged Docker containers frequently caus
 ### 💾 5. Automatic Persistence & Home Seeding
 Your development workspace, installed extensions, SSH keys, and desktop customizations survive across container rebuilds:
 *   **Persistent Docker Volumes:** All userdata is safely stored within the `home_data` volume attached to `/home/linuxuser`.
-*   **Intelligent Seeding Archive (`start.sh`):** Upon booting with a clean volume, an automated entrypoint script extracts a compressed base configuration archive (`/opt/home_seed.tar.xz`), seeding clean desktop icons, `.xsession` files, **Homebrew** package managers, and PowerShell profiles without overwriting existing data on subsequent runs.
+*   **Intelligent Seeding Archive (`start.sh`):** On startup, if the `Desktop` directory (`/home/linuxuser/Desktop`) is missing, an automated entrypoint script extracts a compressed base configuration archive (`/opt/home_seed.tar.xz`), seeding clean desktop icons, `.xsession` files, **Homebrew** package managers, and PowerShell profiles without overwriting existing user data on subsequent runs.
 
 ---
 
@@ -132,6 +132,74 @@ Ideal for dedicated server host nodes containing NVIDIA RTX / Quadro / Data Cent
 
 ---
 
+## ☸️ Optional Kubernetes Deployment & Orchestration Guide (`k8s/`)
+
+For production cloud environments, Kubernetes bastion jump boxes, or bare-metal clusters, this repository ships with enterprise-grade Kubernetes manifests located in the [`k8s/`](file:///c:/temp/remote-desktop/k8s) directory:
+
+| Manifest | Architecture & Function |
+| :--- | :--- |
+| **`pvc.yaml`** | Provisions a 20Gi `ReadWriteOnce` PersistentVolumeClaim (`remote-desktop-pvc`) to guarantee user desktop persistence across pod rescheduling. |
+| **`deployment.yaml`** | Configures pod replica sets with `Recreate` deployment locking, container kernel entitlements (`SYS_ADMIN` capability), a dedicated 2Gi in-memory `emptyDir` mount at `/dev/shm` (resolving default Kubernetes 64MB Chromium browser crashes), and commented options for NVIDIA Kubernetes Device Plugin limits (`nvidia.com/gpu: "1"`). |
+| **`service.yaml`** | Exposes the RDP socket over port `3389` with flexible architecture support for `LoadBalancer` (Cloud/MetalLB), static `NodePort` (e.g., node port 31389), or `ClusterIP` port-forwarding tunnels. |
+| **`kustomization.yaml`** | Seamless Kustomize orchestrator for automated one-line deployments. |
+
+### Quick Turnkey Cluster Deployment
+1. **Apply Manifests via Kustomize:**
+   ```bash
+   kubectl apply -k k8s/
+   ```
+2. **Connect via Port Forwarding (If using internal ClusterIP / Local Testing):**
+   ```bash
+   kubectl port-forward service/remote-desktop-service 3389:3389
+   ```
+3. **Check Service External Address (If using LoadBalancer):**
+   ```bash
+   kubectl get svc remote-desktop-service
+   ```
+   Dial into the assigned external IP address on port `3389` via your standard RDP client!
+
+### 🪟 Windows Hosted Lightweight Kubernetes Setup (K3s / k3d via Winget)
+Running lightweight Kubernetes locally on a Windows host using **K3s / k3d** (lightweight K3s in Docker) offers an isolated, fast orchestration lab. Here is the complete end-to-end deployment guide for Windows hosts:
+
+#### 1. Install K3d, Kubectl, & Docker via Windows Winget
+Open an elevated **Windows PowerShell (Admin)** terminal and run:
+```powershell
+winget install -e --id k3d.k3d
+winget install -e --id Kubernetes.kubectl
+winget install -e --id Docker.DockerDesktop
+winget install -e --id Microsoft.WSL
+```
+*(Ensure Docker Desktop is running with the WSL2 backend enabled in Settings → Resources → WSL Integration).*
+
+#### 2. Create the Lightweight K3s/k3d Windows Cluster
+Launch your local Kubernetes cluster and instruct the built-in load balancer to bind XRDP port `3389` directly to your Windows desktop host:
+```powershell
+# Create a lightweight 1-node cluster with direct port 3389 LoadBalancer translation
+k3d cluster create remote-desktop-cluster --port "3389:3389@loadbalancer" --servers 1
+
+# Optional: To enable Windows WSL2 DirectX GPU passthrough inside K3s worker nodes, append:
+# --volume "/dev/dxg:/dev/dxg@server:0" --env "MESA_D3D12_DEFAULT_ADAPTER=1@server:0"
+```
+
+#### 3. Build & Import the Local Docker Image into K3s
+Because local K3s nodes do not automatically see unpushed host container images, build your desktop environment locally and inject it directly into the k3d cluster cache:
+```powershell
+# 1. Build the local image (or your customized XFCE/MATE/KDE tag)
+docker build -t remote-desktop:latest .
+
+# 2. Import the built image straight into the running K3s cluster nodes
+k3d image import remote-desktop:latest -c remote-desktop-cluster
+```
+
+#### 4. Deploy Manifests & Connect via Windows RDP
+With your cluster running and image cached, instantiate your workstation:
+```powershell
+kubectl apply -k k8s/
+```
+Once the pod status reports `Running` (`kubectl get pods`), launch Windows built-in **Remote Desktop Connection (`mstsc.exe`)**, enter `localhost:3389` as the computer address, and log in with default credentials (`linuxuser` / `linuxpassword`)! To clean up or destroy the test environment when finished, simply execute `k3d cluster delete remote-desktop-cluster`.
+
+---
+
 ## 🏢 Common Use Cases & Industry Applications
 
 *   **Cloud Bastion & Remote Jump Box:** Securely inspect network firewalls, SSH endpoints, internal enterprise web apps, or Kubernetes clusters from an isolated, fully persistent containerized desktop workstation.
@@ -155,7 +223,7 @@ To wipe all customizations, browser histories, and local cache, shut down the en
 docker-compose down -v
 docker-compose up -d
 ```
-Upon restarting, `start.sh` detects an empty `/home/linuxuser` directory and automatically extracts `/opt/home_seed.tar.xz` to restore pristine factory settings.
+Upon restarting, if `start.sh` detects that `/home/linuxuser/Desktop` is missing, it automatically extracts `/opt/home_seed.tar.xz` to restore pristine factory settings.
 
 ### How do I install additional CLI software or development packages?
 Your terminal includes both Debian APT package manager access via `sudo apt-get install <package>` and standard Linux **Homebrew** access (`brew install <formula>`), which comes seeded directly inside your PowerShell path profile.
