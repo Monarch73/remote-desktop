@@ -40,7 +40,7 @@ RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dea
     install -D -o root -g root -m 644 /usr/share/keyrings/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
     echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
     echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list && \
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-prod.list && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/ubuntu/26.04/prod resolute main" > /etc/apt/sources.list.d/microsoft-prod.list && \
     apt-get update && apt-get install -y \
     google-chrome-stable \
     microsoft-edge-stable \
