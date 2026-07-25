@@ -55,6 +55,15 @@ RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dea
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure desktop shortcuts and command wrappers to launch Chromium browsers with Docker sandbox and memory overrides
+RUN sed -i 's/Exec=\([^ ]*\)/Exec=\1 --no-sandbox --disable-dev-shm-usage/g' /usr/share/applications/google-chrome*.desktop /usr/share/applications/microsoft-edge*.desktop /usr/share/applications/code*.desktop 2>/dev/null || true && \
+    printf '#!/bin/sh\nexec /usr/bin/microsoft-edge-stable --no-sandbox --disable-dev-shm-usage "$@"\n' > /usr/local/bin/microsoft-edge && \
+    printf '#!/bin/sh\nexec /usr/bin/microsoft-edge-stable --no-sandbox --disable-dev-shm-usage "$@"\n' > /usr/local/bin/microsoft-edge-stable && \
+    printf '#!/bin/sh\nexec /usr/bin/google-chrome-stable --no-sandbox --disable-dev-shm-usage "$@"\n' > /usr/local/bin/google-chrome && \
+    printf '#!/bin/sh\nexec /usr/bin/google-chrome-stable --no-sandbox --disable-dev-shm-usage "$@"\n' > /usr/local/bin/google-chrome-stable && \
+    printf '#!/bin/sh\nexec /usr/bin/code --no-sandbox --disable-dev-shm-usage "$@"\n' > /usr/local/bin/code && \
+    chmod +x /usr/local/bin/microsoft-edge /usr/local/bin/microsoft-edge-stable /usr/local/bin/google-chrome /usr/local/bin/google-chrome-stable /usr/local/bin/code
+
 # Install PowerShell 7 binary tarball directly from official GitHub releases
 RUN mkdir -p /opt/microsoft/powershell/7 && \
     curl -fLo /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.6.4/powershell-7.6.4-linux-x64.tar.gz && \

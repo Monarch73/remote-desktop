@@ -18,6 +18,8 @@ services:
       - home_data:/home/linuxuser
     restart: unless-stopped
     shm_size: '2gb'
+    cap_add:
+      - SYS_ADMIN
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
