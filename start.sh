@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Ensure DBus machine-id exists
+dbus-uuidgen --ensure=/etc/machine-id 2>/dev/null || true
+
 # Start DBus (often required for desktop environments)
 service dbus start
 
@@ -8,9 +11,23 @@ if [ ! -f /etc/xrdp/rsakeys.ini ]; then
     xrdp-keygen xrdp auto
 fi
 
+# Seed home directory from compressed archive if Desktop folder does NOT exist
+if [ -f /opt/home_seed.tar.xz ] && [ ! -d "/home/$USER_NAME/Desktop" ]; then
+    echo "Seeding home directory for $USER_NAME from /opt/home_seed.tar.xz..."
+    mkdir -p /home/$USER_NAME
+    tar -xf /opt/home_seed.tar.xz -C /home/$USER_NAME/
+    chown -R $USER_NAME:$USER_NAME /home/$USER_NAME
+fi
+
 # Make sure the user has a .xsession file if not present (in case volume was empty)
 if [ ! -f /home/$USER_NAME/.xsession ]; then
-    echo "xfce4-session" > /home/$USER_NAME/.xsession
+    if command -v mate-session >/dev/null 2>&1; then
+        echo "mate-session" > /home/$USER_NAME/.xsession
+    elif command -v startplasma-x11 >/dev/null 2>&1; then
+        echo "startplasma-x11" > /home/$USER_NAME/.xsession
+    else
+        echo "xfce4-session" > /home/$USER_NAME/.xsession
+    fi
     chown $USER_NAME:$USER_NAME /home/$USER_NAME/.xsession
 fi
 
@@ -20,8 +37,12 @@ if [ -f /home/$USER_NAME/.bashrc ] && ! grep -q "brew shellenv" /home/$USER_NAME
     chown $USER_NAME:$USER_NAME /home/$USER_NAME/.bashrc
 fi
 
+# Clean up stale PID and lock files from previous container runs
+rm -f /var/run/xrdp.pid /var/run/xrdp-sesman.pid /var/run/xrdp/xrdp*.pid 2>/dev/null || true
+
 # Start sesman in background
 /usr/sbin/xrdp-sesman
 
 # Start xrdp in foreground
 /usr/sbin/xrdp --nodaemon
+

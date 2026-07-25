@@ -1,14 +1,16 @@
-# Dockerized Remote Desktop (XFCE + XRDP)
+# Dockerized Remote Desktop (XFCE / MATE / KDE Plasma + XRDP)
 
-A lightweight, containerized Ubuntu desktop environment accessible via the Remote Desktop Protocol (RDP). This project builds a Docker image based on **Ubuntu 24.04**, running the **XFCE4** desktop environment and serving it via **XRDP**.
+A lightweight, containerized Ubuntu desktop environment accessible via the Remote Desktop Protocol (RDP). This project builds a Docker image based on **Ubuntu 26.04**, supporting **XFCE4**, **MATE**, or **KDE Plasma** desktop environments served via **XRDP**.
 
-It is designed to be easy to spin up, persistent, and customizable.
+It is designed to be easy to spin up, persistent, customizable, and GPU-pass-through ready.
 
 ## 🚀 Features
 
-*   **OS:** Ubuntu 24.04 LTS (Noble Numbat)
-*   **Desktop:** XFCE4 (Lightweight and fast)
+*   **OS:** Ubuntu 26.04 (Resolute Raccoon)
+*   **Desktop Options:** XFCE4 (Lightweight), MATE (Full), KDE Plasma (Full)
 *   **Remote Access:** XRDP (Standard RDP port 3389)
+*   **GPU Acceleration:** Commented configuration options for NVIDIA Container Toolkit and WSL2 `/dev/dxg` DirectX pass-through.
+*   **Security:** AppArmor & Seccomp unconfined options for seamless DBus and sandbox compatibility.
 *   **User Management:** Non-root user with `sudo` privileges.
 *   **Persistence:** Docker volume for user's home directory (`/home/linuxuser`).
 *   **Software:** Google Chrome and Visual Studio Code pre-installed.
@@ -28,12 +30,20 @@ It is designed to be easy to spin up, persistent, and customizable.
     cd your-repo-name
     ```
 
-2.  **Build and Start the container:**
+2.  **Select Desktop Environment (Optional):**
+    In `docker-compose.yml`, uncomment your preferred Dockerfile under `build:`:
+    ```yaml
+    dockerfile: Dockerfile       # XFCE4 (Default)
+    # dockerfile: Dockerfile.mate  # MATE
+    # dockerfile: Dockerfile.kde   # KDE Plasma
+    ```
+
+3.  **Build and Start the container:**
     ```bash
     docker-compose up -d --build
     ```
 
-3.  **Connect via RDP:**
+4.  **Connect via RDP:**
     Open your RDP client and connect to:
     *   **Address:** `localhost:3389`
     *   **Username:** `linuxuser`
@@ -48,34 +58,27 @@ It is designed to be easy to spin up, persistent, and customizable.
 | **User** | `linuxuser` | `linuxpassword` |
 | **Root** | `root` | `rootpassword` |
 
-### Customizing Credentials
+### GPU Pass-Through Setup
 
-You can change the default username and passwords by modifying the `args` section in `docker-compose.yml` before building:
+`docker-compose.yml` includes commented sections for GPU acceleration:
 
-```yaml
-services:
-  desktop:
-    build:
-      args:
-        USER_NAME: newuser
-        USER_PASSWORD: securepassword
-        ROOT_PASSWORD: securerootpassword
-    volumes:
-      # IMPORTANT: Update this path if you change USER_NAME
-      - home_data:/home/newuser
-```
-
-*Note: If you change the `USER_NAME`, you must also update the volume mapping path to match the new home directory.*
+- **NVIDIA GPU (Host with NVIDIA Container Toolkit)**:
+  Uncomment the `deploy.resources.reservations.devices` section in `docker-compose.yml`.
+- **WSL2 / DirectX GPU (Windows Host)**:
+  Uncomment the `devices: - /dev/dxg:/dev/dxg` and `MESA_D3D12_DEFAULT_ADAPTER=1` section in `docker-compose.yml`.
 
 ## 💾 Persistence
 
-This project uses a Docker volume named `home_data` to persist the user's home directory. This means your files and desktop settings in `/home/linuxuser` will survive container restarts and rebuilds.
+This project uses a Docker volume named `home_data` to persist the user's home directory (`/home/linuxuser`).
 
-To reset the data, you can remove the volume:
+### 🌱 Automatic Home Seeding
+When starting a container with a fresh or empty volume/bind mount at `/home/linuxuser`, the container checks for the presence of the `Desktop` directory (`/home/linuxuser/Desktop`). If missing, it automatically extracts a pre-packaged, highly compressed seed archive (`/opt/home_seed.tar.xz`) to seed default environment files (`.xsession`, `.bashrc`, Homebrew, and desktop settings). If `Desktop` already exists, seeding is skipped to protect existing user data.
+
+To reset the data and trigger re-seeding:
 ```bash
 docker-compose down -v
 ```
 
 ## 📝 License
 
-[MIT](LICENSE) (or whichever license you choose)
+[MIT](LICENSE)

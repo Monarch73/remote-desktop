@@ -2,8 +2,11 @@ services:
   desktop:
     build:
       context: .
+      # Select the Dockerfile for your desired desktop environment:
+      dockerfile: Dockerfile       # XFCE4 Desktop (Lightweight & Fast - Default)
+      # dockerfile: Dockerfile.mate  # MATE Desktop (Full Feature Set)
+      # dockerfile: Dockerfile.kde   # KDE Plasma Desktop (Full Feature Set)
       args:
-        # You can override these here or keep the defaults from the Dockerfile
         USER_NAME: linuxuser
         USER_PASSWORD: linuxpassword
         ROOT_PASSWORD: rootpassword
@@ -14,10 +17,29 @@ services:
       # UPDATE THE PATH '/home/linuxuser' IF YOU CHANGE THE USER_NAME ARGUMENT!
       - home_data:/home/linuxuser
     restart: unless-stopped
-    # Shared memory size might need to be increased for graphical apps (e.g. browsers)
-    shm_size: '1gb'
+    shm_size: '2gb'
     security_opt:
       - seccomp:unconfined
+      - apparmor:unconfined
+
+    # =========================================================================
+    # GPU Pass-Through Options (Uncomment desired option to enable GPU)
+    # =========================================================================
+    # Option 1: NVIDIA GPU Pass-Through (Requires NVIDIA Container Toolkit on Host)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+    # Option 2: WSL2 / DirectX GPU Pass-Through (NVIDIA / AMD / Intel GPUs on Windows)
+    # devices:
+    #   - /dev/dxg:/dev/dxg
+    # environment:
+    #   - LIBGL_ALWAYS_SOFTWARE=0
+    #   - MESA_D3D12_DEFAULT_ADAPTER=1
 
 volumes:
   home_data:
