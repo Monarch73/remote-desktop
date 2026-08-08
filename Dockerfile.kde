@@ -105,7 +105,7 @@ RUN echo "/usr/bin/pwsh" >> /etc/shells && \
     usermod -aG sudo ${USER_NAME}
 
 # Configure XRDP to allow anyone to start X server (needed for some setups)
-RUN sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
+RUN mkdir -p /etc/X11 && echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
 
 # Configure KDE Plasma for the user session and Konsole default font and UTF-8 codec
 RUN echo "startplasma-x11" > /home/${USER_NAME}/.xsession && \

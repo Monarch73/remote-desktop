@@ -105,7 +105,7 @@ RUN echo "/usr/bin/pwsh" >> /etc/shells && \
     usermod -aG sudo ${USER_NAME}
 
 # Configure XRDP to allow anyone to start X server (needed for some setups)
-RUN sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.config
+RUN mkdir -p /etc/X11 && echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
 
 # Configure XFCE session and terminal emulator default font and UTF-8 encoding for the user
 RUN echo "xfce4-session" > /home/${USER_NAME}/.xsession && \
