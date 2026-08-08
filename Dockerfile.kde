@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     ubuntu-wallpapers \
     desktop-base \
     xrdp \
+    xorgxrdp \
+    xserver-xorg-legacy \
     sudo \
     vim \
     net-tools \

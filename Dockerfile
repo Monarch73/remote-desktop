@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     xfce4 \
     xfce4-goodies \
     xrdp \
+    xorgxrdp \
+    xserver-xorg-legacy \
     ubuntu-wallpapers \
     desktop-base \
     sudo \
